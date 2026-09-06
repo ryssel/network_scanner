@@ -15,8 +15,10 @@ class NetworkScannerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Manage the configurations from the user interface."""
         errors = {}
 
-        # Load data from configuration.yaml
-        yaml_config = self.hass.data.get(DOMAIN, {})
+        # Load data from configuration.yaml. Namespaced under "_yaml_config"
+        # since hass.data[DOMAIN] also holds per-entry coordinators keyed by
+        # entry_id (see __init__.py's async_setup_entry).
+        yaml_config = self.hass.data.get(DOMAIN, {}).get("_yaml_config", {})
         _LOGGER.debug("YAML Config: %s", yaml_config)
 
         if user_input is not None:
