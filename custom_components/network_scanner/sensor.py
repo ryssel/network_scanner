@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -27,7 +28,7 @@ async def async_setup_entry(
     async_add_entities([NetworkScannerSensor(coordinator, ip_range)])
 
 
-class NetworkScannerSensor(CoordinatorEntity, object):
+class NetworkScannerSensor(CoordinatorEntity, SensorEntity):
     """Sensor exposing the network scan results.
 
     The scan itself is owned by the DataUpdateCoordinator. This entity is
