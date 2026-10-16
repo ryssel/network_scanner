@@ -18,8 +18,15 @@ SCAN_INTERVAL = timedelta(minutes=15)
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
-    """Set up the Network Scanner component."""
-    hass.data.setdefault(DOMAIN, {})
+    """Set up the Network Scanner component.
+
+    hass.data[DOMAIN] also holds per-entry coordinators (keyed by entry_id,
+    set in async_setup_entry below), so the YAML block is namespaced under
+    its own "_yaml_config" key instead of occupying the top level - it must
+    not collide with those entry_id keys.
+    """
+    domain_data = hass.data.setdefault(DOMAIN, {})
+    domain_data["_yaml_config"] = config.get(DOMAIN, {})
     return True
 
 
