@@ -59,6 +59,10 @@ class NetworkScannerClient:
         socket.setdefaulttimeout(timeout)
         try:
             host, _, _ = socket.gethostbyaddr(ip)
+            # musl (Alpine, HA's base image) echoes the IP back instead of
+            # raising when there is no PTR record; that is not a hostname.
+            if host == ip:
+                return None
             return NetworkScannerClient._short_label(host)
         except Exception:
             return None
