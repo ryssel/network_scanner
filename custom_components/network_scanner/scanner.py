@@ -124,7 +124,7 @@ class NetworkScannerClient:
                         "name": device_name,
                         "type": device_type,
                         "vendor": vendor,
-                        "hostname": hostname,
+                        "hostname": hostname or "",
                     }
                 )
             except Exception as err:
