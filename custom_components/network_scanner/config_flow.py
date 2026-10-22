@@ -1,7 +1,14 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
-from homeassistant.helpers.selector import TextSelector, TextSelectorConfig
+from homeassistant.helpers.selector import (
+    SelectOptionDict,
+    SelectSelector,
+    SelectSelectorConfig,
+    SelectSelectorMode,
+    TextSelector,
+    TextSelectorConfig,
+)
 from .const import DOMAIN
 import logging
 
@@ -76,6 +83,10 @@ def _mac_mapping_keys(data):
     return sorted(keys, key=lambda k: int(k[12:]))
 
 
+def _current_mapping_text(data):
+    return "\n".join(data[k] for k in _mac_mapping_keys(data) if data[k])
+
+
 class NetworkScannerOptionsFlow(config_entries.OptionsFlow):
     """Edit the MAC mappings of an existing entry (the Configure button).
 
@@ -86,7 +97,67 @@ class NetworkScannerOptionsFlow(config_entries.OptionsFlow):
     __init__.py reloads the entry.
     """
 
+    def __init__(self):
+        self._prefill = None
+
     async def async_step_init(self, user_input=None):
+        return self.async_show_menu(step_id="init", menu_options=["add", "edit"])
+
+    async def async_step_add(self, user_input=None):
+        """Pick devices from the last scan that have no mapping yet."""
+        entry = self.config_entry
+
+        if user_input is not None:
+            picked = set(user_input.get("devices", []))
+            new_lines = [line for mac, line in self._candidates if mac in picked]
+            self._prefill = "\n".join(
+                [_current_mapping_text(entry.data), *new_lines]
+            ).strip()
+            return await self.async_step_edit()
+
+        mapped = {
+            entry.data[k].split(";", 1)[0].strip().lower()
+            for k in _mac_mapping_keys(entry.data)
+            if entry.data[k]
+        }
+        coordinator = self.hass.data.get(DOMAIN, {}).get(entry.entry_id)
+        scanned = (coordinator.data if coordinator else None) or []
+
+        self._candidates = []
+        options = []
+        seen = set()
+        for dev in scanned:
+            mac = dev["mac"].lower()
+            if mac in mapped or mac in seen:
+                continue
+            seen.add(mac)
+            hostname = dev.get("hostname") or ""
+            vendor = dev.get("vendor") or ""
+            name = (hostname or vendor or "Unknown").replace(";", ",")
+            desc = vendor.replace(";", ",")
+            self._candidates.append((mac, f"{dev['mac']};{name};{desc}"))
+            label = f"{dev['ip']}  {dev['mac']}  {hostname or '(no hostname)'}  ({vendor})"
+            options.append(SelectOptionDict(value=mac, label=label))
+
+        if not options:
+            return self.async_abort(reason="no_new_devices")
+
+        return self.async_show_form(
+            step_id="add",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("devices", default=[]): SelectSelector(
+                        SelectSelectorConfig(
+                            options=options,
+                            multiple=True,
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    ),
+                }
+            ),
+        )
+
+    async def async_step_edit(self, user_input=None):
         errors = {}
         entry = self.config_entry
 
@@ -106,13 +177,13 @@ class NetworkScannerOptionsFlow(config_entries.OptionsFlow):
                 self.hass.config_entries.async_update_entry(entry, data=data)
                 return self.async_create_entry(data={})
             current = user_input.get("mac_mappings", "")
+        elif self._prefill is not None:
+            current = self._prefill
         else:
-            current = "\n".join(
-                entry.data[k] for k in _mac_mapping_keys(entry.data) if entry.data[k]
-            )
+            current = _current_mapping_text(entry.data)
 
         return self.async_show_form(
-            step_id="init",
+            step_id="edit",
             data_schema=vol.Schema(
                 {
                     vol.Optional(

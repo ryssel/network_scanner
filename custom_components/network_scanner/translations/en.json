@@ -3,6 +3,20 @@
     "step": {
       "init": {
         "title": "MAC mappings",
+        "menu_options": {
+          "add": "Add found devices",
+          "edit": "Edit list"
+        }
+      },
+      "add": {
+        "title": "Add found devices",
+        "description": "Devices from the last scan whose MAC is not in the list yet. The ones you tick are added to the list on the next page, where you can rename them before saving.",
+        "data": {
+          "devices": "Devices"
+        }
+      },
+      "edit": {
+        "title": "MAC mappings",
         "description": "One device per line: MAC;Name;Description (the description may be empty, but keep both semicolons). Saving reloads the integration.",
         "data": {
           "mac_mappings": "MAC mappings"
@@ -11,6 +25,9 @@
     },
     "error": {
       "invalid_mapping": "Every line needs the form MAC;Name;Description with two semicolons."
+    },
+    "abort": {
+      "no_new_devices": "Every device from the last scan is already in the list."
     }
   }
 }
