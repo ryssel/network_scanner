@@ -70,9 +70,7 @@ class NetworkScannerClient:
             socket.setdefaulttimeout(old_to)
 
     def _get_device_info_from_mac(self, mac_address: str) -> tuple[str, str]:
-        return self.mac_mapping.get(
-            mac_address.lower(), ("Unknown Device", "Unknown Device")
-        )
+        return self.mac_mapping.get(mac_address.lower(), ("", ""))
 
     # ---------------------- main entry point ----------------------
     def scan(self) -> list[dict[str, Any]]:
