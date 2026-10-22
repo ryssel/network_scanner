@@ -81,12 +81,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> b
 
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
+    # The options flow rewrites entry.data; reload so the scanner picks up
+    # the new MAC mappings.
+    config_entry.async_on_unload(config_entry.add_update_listener(_async_reload_entry))
+
     hass.async_create_background_task(
         coordinator.async_refresh(),
         name=f"{DOMAIN}_initial_refresh",
     )
 
     return True
+
+
+async def _async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
+    await hass.config_entries.async_reload(config_entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

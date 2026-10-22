@@ -1,0 +1,16 @@
+{
+  "options": {
+    "step": {
+      "init": {
+        "title": "MAC mappings",
+        "description": "One device per line: MAC;Name;Description (the description may be empty, but keep both semicolons). Saving reloads the integration.",
+        "data": {
+          "mac_mappings": "MAC mappings"
+        }
+      }
+    },
+    "error": {
+      "invalid_mapping": "Every line needs the form MAC;Name;Description with two semicolons."
+    }
+  }
+}
